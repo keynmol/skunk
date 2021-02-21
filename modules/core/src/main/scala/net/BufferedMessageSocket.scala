@@ -6,16 +6,15 @@ package skunk.net
 
 import cats._
 import cats.effect.{ Sync => _, _ }
-import cats.effect.implicits._
+import cats.effect.syntax.all._
 import cats.effect.std.{ Console, Queue }
 import cats.syntax.all._
 import fs2.concurrent._
-import fs2.io.Network
 import fs2.Stream
 import skunk.data._
 import skunk.net.message._
 import scala.concurrent.duration._
-import fs2.io.tcp.SocketGroup
+import fs2.io.net.{Network, SocketGroup}
 
 /**
  * A `MessageSocket` that buffers incoming messages, removing and handling asynchronous back-end
@@ -76,14 +75,14 @@ trait BufferedMessageSocket[F[_]] extends MessageSocket[F] {
 
 object BufferedMessageSocket {
 
-  def apply[F[_]: Concurrent: Network: Console](
+  def apply[F[_]: Temporal: Concurrent: Network: Console](
     host:         String,
     port:         Int,
     queueSize:    Int,
     debug:        Boolean,
     readTimeout:  FiniteDuration,
     writeTimeout: FiniteDuration,
-    sg:           SocketGroup,
+    sg:           SocketGroup[F],
     sslOptions:   Option[SSLNegotiation.Options[F]],
   ): Resource[F, BufferedMessageSocket[F]] =
     for {
@@ -125,7 +124,7 @@ object BufferedMessageSocket {
   // Here we read messages as they arrive, rather than waiting for the user to ask. This allows us
   // to handle asynchronous messages, which are dealt with here and not passed on. Other messages
   // are queued up and are typically consumed immediately, so a small queue size is probably fine.
-  def fromMessageSocket[F[_]: Concurrent](
+  def fromMessageSocket[F[_]: Concurrent: Spawn](
     ms:        MessageSocket[F],
     queueSize: Int
   ): F[BufferedMessageSocket[F]] =
@@ -134,11 +133,11 @@ object BufferedMessageSocket {
       xaSig <- SignallingRef[F, TransactionStatus](TransactionStatus.Idle) // initial state (ok)
       paSig <- SignallingRef[F, Map[String, String]](Map.empty)
       bkSig <- Deferred[F, BackendKeyData]
-      noTop <- Topic[F, Notification[String]](Notification(-1, Identifier.dummy, "")) // blech
+      noTop <- Topic[F, Notification[String]]//(Notification(-1, Identifier.dummy, "")) // blech
       fib   <- next(ms, xaSig, paSig, bkSig, noTop).repeat.evalMap(queue.offer).compile.drain.attempt.flatMap {
         case Left(e)  => queue.offer(NetworkError(e)) // publish the failure
         case Right(a) => a.pure[F]
-      } .start
+      }.start
     } yield
       new AbstractMessageSocket[F] with BufferedMessageSocket[F] {
 

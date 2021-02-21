@@ -9,8 +9,7 @@ import cats.effect._
 import cats.effect.std.Console
 import cats.syntax.all._
 import fs2.concurrent.Signal
-import fs2.io.Network
-import fs2.io.tcp.SocketGroup
+import fs2.io.net.{Network, SocketGroup}
 import fs2.Pipe
 import fs2.Stream
 import natchez.Trace
@@ -241,7 +240,7 @@ object Session {
    * @param strategy
    * @group Constructors
    */
-  def pooled[F[_]: Concurrent: Trace: Network: Console](
+  def pooled[F[_]: Temporal: Concurrent: Trace: Network: Console](
     host:         String,
     port:         Int            = 5432,
     user:         String,
@@ -255,13 +254,13 @@ object Session {
     ssl:          SSL            = SSL.None,
   ): Resource[F, Resource[F, Session[F]]] = {
 
-    def session(socketGroup:  SocketGroup, sslOp: Option[SSLNegotiation.Options[F]]): Resource[F, Session[F]] =
+    def session(socketGroup:  SocketGroup[F], sslOp: Option[SSLNegotiation.Options[F]]): Resource[F, Session[F]] =
       fromSocketGroup[F](socketGroup, host, port, user, database, password, debug, readTimeout, writeTimeout, strategy, sslOp)
 
     val logger: String => F[Unit] = s => Console[F].println(s"TLS: $s")
 
     for {
-      sockGrp <- SocketGroup[F]()
+      sockGrp <- Network[F].socketGroup()
       sslOp   <- Resource.eval(ssl.toSSLNegotiationOptions(if (debug) logger.some else none))
       pool    <- Pool.of(session(sockGrp, sslOp), max)(Recyclers.full)
     } yield pool
@@ -274,7 +273,7 @@ object Session {
    * single-session pool. This method is shorthand for `Session.pooled(..., max = 1, ...).flatten`.
    * @see pooled
    */
-  def single[F[_]: Concurrent: Trace: Network: Console](
+  def single[F[_]: Temporal: Concurrent: Trace: Network: Console](
     host:         String,
     port:         Int            = 5432,
     user:         String,
@@ -300,8 +299,8 @@ object Session {
       ssl          = ssl,
     ).flatten
 
-  def fromSocketGroup[F[_]: Concurrent: Trace: Network: Console](
-    socketGroup:  SocketGroup,
+  def fromSocketGroup[F[_]: Temporal: Concurrent: Trace: Network: Console](
+    socketGroup:  SocketGroup[F],
     host:         String,
     port:         Int            = 5432,
     user:         String,

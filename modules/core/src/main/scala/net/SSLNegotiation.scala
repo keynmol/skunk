@@ -4,21 +4,21 @@
 
 package skunk.net
 
-import fs2.io.tls.TLSContext
-import fs2.io.tls.TLSParameters
+import fs2.io.net.tls.TLSContext
+import fs2.io.net.tls.TLSParameters
 import cats._
 import cats.effect._
 import cats.syntax.all._
-import fs2.io.tcp._
+import cats.effect.syntax.all._
 import scala.concurrent.duration._
 import fs2.Chunk
-import fs2.io.Network
+import fs2.io.net._
 
 object SSLNegotiation {
 
   /** Parameters for `negotiateSSL`. */
   case class Options[F[_]](
-    tlsContext:    TLSContext,
+    tlsContext:    TLSContext[F],
     tlsParameters: TLSParameters,
     fallbackOk:    Boolean,
     logger:        Option[String => F[Unit]],
@@ -32,7 +32,7 @@ object SSLNegotiation {
    * Negotiate SSL with Postgres, given a brand new connected `Socket` and a `TLSContext`. If SSL is
    * unavailable, fall back to the unencrypted socket if `fallbackOk`, otherwise raise an exception.
    */
-  def negotiateSSL[F[_]: Network](
+  def negotiateSSL[F[_]: Network: Temporal](
     socket:       Socket[F],
     readTimeout:  FiniteDuration,
     writeTimeout: FiniteDuration,
@@ -45,8 +45,8 @@ object SSLNegotiation {
       ev.raiseError(new Exception(s"Fatal failure during SSL negotiation: $msg"))
 
     val initiate: F[Byte] =
-      socket.write(SSLRequest, Some(writeTimeout)) *>
-      socket.read(1, Some(readTimeout)).map(_.flatMap(_.get(0))).flatMap {
+      socket.write(SSLRequest).timeout(writeTimeout) *>
+      socket.read(1).timeout(readTimeout).map(_.flatMap(_.get(0))).flatMap {
         case None    => fail(s"EOF before 1 byte could be read.")
         case Some(b) => b.pure[F]
       }

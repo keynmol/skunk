@@ -3,12 +3,12 @@
 // Our Scala versions.
 lazy val `scala-2.12`     = "2.12.12"
 lazy val `scala-2.13`     = "2.13.4"
-lazy val `scala-3.0-prev` = "3.0.0-M2"
-lazy val `scala-3.0-curr` = "3.0.0-M3"
+lazy val `scala-3.0-prev` = "3.0.0-M3"
+lazy val `scala-3.0-curr` = "3.0.0-RC1"
 
 // This is used in a couple places
-lazy val fs2Version = "3.0.0-M7"
-lazy val natchezVersion = "0.1.0-M2"
+lazy val fs2Version = "3.0.0-M9"
+lazy val natchezVersion = "0.1.0-M3+1-3a84ae15-SNAPSHOT"
 
 
 // We do `evictionCheck` in CI
@@ -111,12 +111,12 @@ lazy val core = project
     description := "Tagless, non-blocking data access library for Postgres.",
     resolvers   +=  "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     libraryDependencies ++= Seq(
-      "org.typelevel"    %% "cats-core"    % "2.3.1",
-      "org.typelevel"    %% "cats-effect"  % "3.0.0-M5",
+      "org.typelevel"    %% "cats-core"    % "2.4.2",
+      "org.typelevel"    %% "cats-effect"  % "3.0.0-RC2",
       "co.fs2"           %% "fs2-core"     % fs2Version,
       "co.fs2"           %% "fs2-io"       % fs2Version,
-      "org.scodec"       %% "scodec-core"  % (if (scalaVersion.value == `scala-3.0-prev`) "2.0.0-M2" else if (scalaVersion.value == `scala-3.0-curr`) "2.0.0-M3" else "1.11.7"),
-      "org.scodec"       %% "scodec-cats"  % (if (scalaVersion.value == `scala-3.0-prev`) "1.1.0-M3" else "1.1.0-M4"),
+      "org.scodec"       %% "scodec-core"  % (if (scalaVersion.value == `scala-3.0-prev`) "2.0.0-RC1" else if (scalaVersion.value == `scala-3.0-curr`) "2.0.0-RC1" else "1.11.7"),
+      "org.scodec"       %% "scodec-cats"  % (if (scalaVersion.value == `scala-3.0-prev`) "1.1.0-M4" else "1.1.0-M4"),
       "org.tpolecat"     %% "natchez-core" % natchezVersion,
       "com.ongres.scram"  % "client"       % "2.1",
       "org.tpolecat"     %% "sourcepos"    % "0.1.0",

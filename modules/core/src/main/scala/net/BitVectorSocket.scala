@@ -7,13 +7,12 @@ package skunk.net
 import cats._
 import cats.effect._
 import cats.syntax.all._
+import cats.effect.syntax.all._
 import fs2.Chunk
-import fs2.io.tcp.Socket
 import scala.concurrent.duration.FiniteDuration
 import scodec.bits.BitVector
-import java.net.InetSocketAddress
-import fs2.io.tcp.SocketGroup
-import fs2.io.Network
+import fs2.io.net.{SocketGroup, Socket, Network}
+import com.comcast.ip4s.{SocketAddress, Host, Port}
 
 /** A higher-level `Socket` interface defined in terms of `BitVector`. */
 trait BitVectorSocket[F[_]] {
@@ -38,7 +37,7 @@ object BitVectorSocket {
    * @param writeTimeout a write timeout, typically no more than a few seconds.
    * @group Constructors
    */
-  def fromSocket[F[_]](
+  def fromSocket[F[_]: Temporal](
     socket:       Socket[F],
     readTimeout:  FiniteDuration,
     writeTimeout: FiniteDuration
@@ -48,9 +47,7 @@ object BitVectorSocket {
     new BitVectorSocket[F] {
 
       def readBytes(n: Int): F[Array[Byte]] =
-        socket.readN(n, Some(readTimeout)).flatMap {
-          case None => ev.raiseError(new Exception("Fatal: EOF"))
-          case Some(c) =>
+        socket.readN(n).timeout(readTimeout).flatMap { c =>
             if (c.size == n) c.toArray.pure[F]
             else ev.raiseError(new Exception(s"Fatal: Read ${c.size} bytes, expected $n."))
         }
@@ -59,7 +56,7 @@ object BitVectorSocket {
         readBytes(nBytes).map(BitVector(_))
 
       override def write(bits: BitVector): F[Unit] =
-        socket.write(Chunk.array(bits.toByteArray), Some(writeTimeout))
+        socket.write(Chunk.array(bits.toByteArray)).timeout(writeTimeout)
 
     }
 
@@ -72,16 +69,16 @@ object BitVectorSocket {
    * @param writeTimeout a write timeout, typically no more than a few seconds.
    * @group Constructors
    */
-  def apply[F[_]: Network](
+  def apply[F[_]: Network: Temporal] (
     host:         String,
     port:         Int,
     readTimeout:  FiniteDuration,
     writeTimeout: FiniteDuration,
-    sg:           SocketGroup,
+    sg:           SocketGroup[F],
     sslOptions:   Option[SSLNegotiation.Options[F]],
-  )(implicit ev: MonadError[F, Throwable]): Resource[F, BitVectorSocket[F]] =
+  ): Resource[F, BitVectorSocket[F]] =
     for {
-      sock  <- sg.client[F](new InetSocketAddress(host, port))
+      sock  <- sg.client(SocketAddress(Host.fromString(host).get, Port.fromInt(port).get))
       sockʹ <- sslOptions.fold(sock.pure[Resource[F, *]])(SSLNegotiation.negotiateSSL(sock, readTimeout, writeTimeout, _))
     } yield fromSocket(sockʹ, readTimeout, writeTimeout)
 
