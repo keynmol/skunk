@@ -116,10 +116,10 @@ lazy val core = project
       "co.fs2"           %% "fs2-core"     % fs2Version,
       "co.fs2"           %% "fs2-io"       % fs2Version,
       "org.scodec"       %% "scodec-core"  % (if (scalaVersion.value == `scala-3.0-prev`) "2.0.0-RC1" else if (scalaVersion.value == `scala-3.0-curr`) "2.0.0-RC1" else "1.11.7"),
-      "org.scodec"       %% "scodec-cats"  % (if (scalaVersion.value == `scala-3.0-prev`) "1.1.0-M4" else "1.1.0-M4"),
+      "org.scodec"       %% "scodec-cats"  % "1.1.0-RC1",
       "org.tpolecat"     %% "natchez-core" % natchezVersion,
       "com.ongres.scram"  % "client"       % "2.1",
-      "org.tpolecat"     %% "sourcepos"    % "0.1.0",
+      "org.tpolecat"     %% "sourcepos"    % "0.1.0+1-39593613-SNAPSHOT",
     ) ++ Seq(
       "com.beachape"  %% "enumeratum"   % "1.6.1",
     ).map(_.withDottyCompat(scalaVersion.value))
@@ -158,9 +158,9 @@ lazy val tests = project
     publish / skip := true,
     scalacOptions  -= "-Xfatal-warnings",
     libraryDependencies ++= Seq(
-      "org.typelevel"     %% "scalacheck-effect-munit" % "0.7.0",
-      "org.typelevel"     %% "munit-cats-effect-3"     % "0.12.0",
-      "org.typelevel"     %% "cats-free"               % "2.3.1",
+      "org.typelevel"     %% "scalacheck-effect-munit" % "0.7.1",
+      "org.typelevel"     %% "munit-cats-effect-3"     % "0.13.1",
+      "org.typelevel"     %% "cats-free"               % "2.4.2",
     ) ++ Seq(
       "io.chrisdavenport" %% "cats-time"               % "0.3.4",
     ).filterNot(_ => isDotty.value),
