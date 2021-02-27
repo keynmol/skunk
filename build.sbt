@@ -8,7 +8,7 @@ lazy val `scala-3.0-curr` = "3.0.0-RC1"
 
 // This is used in a couple places
 lazy val fs2Version = "3.0.0-M9"
-lazy val natchezVersion = "0.1.0-M3+1-3a84ae15-SNAPSHOT"
+lazy val natchezVersion = "0.1.0-M4"
 
 
 // We do `evictionCheck` in CI
@@ -119,7 +119,7 @@ lazy val core = project
       "org.scodec"       %% "scodec-cats"  % "1.1.0-RC1",
       "org.tpolecat"     %% "natchez-core" % natchezVersion,
       "com.ongres.scram"  % "client"       % "2.1",
-      "org.tpolecat"     %% "sourcepos"    % "0.1.0+1-39593613-SNAPSHOT",
+      "org.tpolecat"     %% "sourcepos"    % "0.1.1",
     ) ++ Seq(
       "com.beachape"  %% "enumeratum"   % "1.6.1",
     ).map(_.withDottyCompat(scalaVersion.value))
