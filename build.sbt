@@ -54,7 +54,7 @@ lazy val commonSettings = Seq(
     "-doc-source-url", "https://github.com/tpolecat/skunk/blob/v" + version.value + "€{FILE_PATH}.scala",
   ),
   libraryDependencies ++= Seq(
-    compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.2" cross CrossVersion.full),
+    compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full),
   ).filterNot(_ => isDotty.value),
 
   scalaModuleInfo ~= (_.map(_.withOverrideScalaVersion(true))),
