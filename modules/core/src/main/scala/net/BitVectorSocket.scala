@@ -40,9 +40,7 @@ object BitVectorSocket {
     new BitVectorSocket[F] {
 
       def readBytes(n: Int): F[Array[Byte]] =
-        socket.readN(n).flatMap {
-          case None => ev.raiseError(new Exception("Fatal: EOF"))
-          case Some(c) =>
+        socket.readN(n).flatMap { c =>
             if (c.size == n) c.toArray.pure[F]
             else ev.raiseError(new Exception(s"Fatal: Read ${c.size} bytes, expected $n."))
         }
@@ -68,7 +66,9 @@ object BitVectorSocket {
     sslOptions:   Option[SSLNegotiation.Options[F]],
   )(implicit ev: MonadError[F, Throwable]): Resource[F, BitVectorSocket[F]] =
     for {
-      sock  <- sg.client(SocketAddress(Hostname(host).get, Port(port).get)) // TODO
+      hostname   <- Resource.eval(ev.fromOption(Hostname.fromString(host), new Exception(s"Fatal: failed to parse '$host' as hostname")))
+      portNumber <- Resource.eval(ev.fromOption(Port.fromInt(port), new Exception(s"Fatal: failed to parse '$port' as port number")))
+      sock  <- sg.client(SocketAddress(hostname, portNumber)) 
       sockʹ <- sslOptions.fold(sock.pure[Resource[F, *]])(SSLNegotiation.negotiateSSL(sock, _))
     } yield fromSocket(sockʹ)
 
