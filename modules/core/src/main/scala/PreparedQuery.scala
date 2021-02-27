@@ -188,9 +188,7 @@ object PreparedQuery {
      * Transform this `PreparedQuery` by a given `FunctionK`.
      * @group Transformations
      */
-    def mapK[G[_]: Defer](fk: F ~> G)(
-       implicit mcg: MonadCancel[G, _]
-    ): PreparedQuery[G, A, B] =
+    def mapK[G[_]](fk: F ~> G)(implicit mc: MonadCancel[G, _]): PreparedQuery[G, A, B] =
       new PreparedQuery[G, A, B] {
         override def cursor(args: A)(implicit or: Origin): Resource[G,Cursor[G,B]] = outer.cursor(args).mapK(fk).map(_.mapK(fk))
         override def option(args: A)(implicit or: Origin): G[Option[B]] = fk(outer.option(args))

@@ -4,7 +4,8 @@
 
 package skunk.net.protocol
 
-import cats.{ApplicativeError, MonadError}
+import cats.{ApplicativeError}
+import cats.MonadThrow
 import cats.syntax.all._
 import natchez.Trace
 import scala.util.control.NonFatal
@@ -28,9 +29,7 @@ trait Startup[F[_]] {
 
 object Startup {
 
-  def apply[F[_]: Exchange: MessageSocket: Trace](
-    implicit ev: MonadError[F, Throwable]
-  ): Startup[F] =
+  def apply[F[_]: Exchange: MessageSocket: Trace: MonadThrow]: Startup[F] =
     new Startup[F] {
       override def apply(user: String, database: String, password: Option[String]): F[Unit] =
         exchange("startup") {
@@ -61,12 +60,10 @@ object Startup {
     }
 
   // already inside an exchange
-  private def authenticationMD5Password[F[_]: Exchange: MessageSocket: Trace](
+  private def authenticationMD5Password[F[_]: MessageSocket: Trace: MonadThrow](
     sm:       StartupMessage,
     password: Option[String],
     salt:     Array[Byte]
-  )(
-    implicit ev: MonadError[F, Throwable]
   ): F[Unit] =
     Trace[F].span("authenticationMD5Password") {
       requirePassword[F](sm, password).flatMap { pw =>
@@ -77,12 +74,10 @@ object Startup {
       }
     }
 
-  private def authenticationSASL[F[_]: Exchange: MessageSocket: Trace](
+  private def authenticationSASL[F[_]: MessageSocket: Trace: MonadThrow](
     sm:         StartupMessage,
     password:   Option[String],
     mechanisms: List[String]
-  )(
-    implicit ev: MonadError[F, Throwable]
   ): F[Unit] =
     Trace[F].span("authenticationSASL") {
         for {

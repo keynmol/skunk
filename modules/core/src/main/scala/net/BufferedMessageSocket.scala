@@ -13,7 +13,7 @@ import fs2.concurrent._
 import fs2.Stream
 import skunk.data._
 import skunk.net.message._
-import fs2.io.net.{ Network, SocketGroup }
+import fs2.io.net.{ SocketGroup }
 
 /**
  * A `MessageSocket` that buffers incoming messages, removing and handling asynchronous back-end
@@ -74,7 +74,7 @@ trait BufferedMessageSocket[F[_]] extends MessageSocket[F] {
 
 object BufferedMessageSocket {
 
-  def apply[F[_]: Concurrent: Network: Console](
+  def apply[F[_]: Concurrent: Console](
     host:         String,
     port:         Int,
     queueSize:    Int,

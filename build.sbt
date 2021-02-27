@@ -57,8 +57,6 @@ lazy val commonSettings = Seq(
     compilerPlugin("org.typelevel" %% "kind-projector" % "0.11.3" cross CrossVersion.full),
   ).filterNot(_ => isDotty.value),
 
-  scalaModuleInfo ~= (_.map(_.withOverrideScalaVersion(true))),
-
   // Coverage Exclusions
   coverageExcludedPackages := "ffstest.*;tests.*;example.*;natchez.http4s.*",
 

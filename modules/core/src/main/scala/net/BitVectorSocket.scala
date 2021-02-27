@@ -9,7 +9,7 @@ import cats.effect._
 import cats.syntax.all._
 import fs2.Chunk
 import scodec.bits.BitVector
-import fs2.io.net.{ Network, Socket, SocketGroup }
+import fs2.io.net.{ Socket, SocketGroup }
 import com.comcast.ip4s._
 
 /** A higher-level `Socket` interface defined in terms of `BitVector`. */
@@ -59,7 +59,7 @@ object BitVectorSocket {
    * @param port the remote port
    * @group Constructors
    */
-  def apply[F[_]: Network](
+  def apply[F[_]](
     host:         String,
     port:         Int,
     sg:           SocketGroup[F],
